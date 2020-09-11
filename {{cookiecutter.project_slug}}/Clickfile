@@ -1,0 +1,181 @@
+"""{{ cookiecutter.project_name }} Clickfile."""
+
+import click
+import subprocess
+import shutil
+from pathlib import Path
+from klak.cli import cli
+
+
+# --------------------------------
+# Settings
+# --------------------------------
+
+
+SETTINGS = {
+    "project_slug": "{{ cookiecutter.project_slug }}",
+}
+
+
+# --------------------------------
+# Utils
+# --------------------------------
+
+
+def _run(*args, **kwargs):
+    """Minimal wrapper around subproces.run.
+
+    Prints called command to console and forwards *args, **kwargs to subprocess.run.
+
+    Kwargs:
+    quiet (bool): True suppreses print to console.
+    """
+    if not args:
+        raise ValueError("_run requires at least one argument.")
+
+    quiet = kwargs.pop("quiet", False)
+    if not quiet:
+        msg = (
+            " ".join(args[0])
+            if (isinstance(args[0], list) or isinstance(args[0], tuple))
+            else args[0]
+        )
+        click.secho(f"{msg}", fg="yellow")
+
+    subprocess.run(*args, **kwargs)
+
+
+# --------------------------------
+# Commands
+# --------------------------------
+
+
+@cli.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument("argv", nargs=-1, type=click.UNPROCESSED)
+def test(argv):
+    """Run the test suite using `pytest`."""
+    quiet = "-q" in argv or "--quiet" in argv
+    cmd = ["pytest", *argv]
+    _run(cmd, check=True, quiet=quiet)
+
+
+@cli.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument(
+    "rule",
+    type=click.Choice(
+        ["patch", "minor", "major", "prepatch", "preminor", "premajor", "prerelease"]
+    ),
+)
+@click.argument("argv", nargs=-1, type=click.UNPROCESSED)
+def bump(rule, argv):
+    """Bump version using `poetry.version`."""
+    # Note: See if -q or --quiet has been passed in argv.
+    quiet = "-q" in argv or "--quiet" in argv
+    cmd = ["poetry", "version", rule, *argv]
+    _run(cmd, check=True, quiet=quiet)
+
+
+@cli.command()
+@click.option("-q", "--quiet", is_flag=True, help="Do not display message(s).")
+def clean(quiet):
+    """Clean local artifacts."""
+    kwargs = {"shell": True, "check": True, "quiet": quiet}
+    cmds = [
+        "rm -rf build/ dist/ .eggs/",
+        "find . -name '*.egg-info' -exec rm -fr {} +",
+        "find . -name '*.egg' -exec rm -rf {} +",
+        "find . -name '*.pyc' -exec rm -f {} +",
+        "find . -name '*.pyo' -exec rm -f {} +",
+        "find . -name '*~' -exec rm -f {} +",
+        "find . -name '__pycache__' -exec rm -fr {} +",
+    ]
+    for cmd in cmds:
+        _run(cmd, **kwargs)
+
+
+@cli.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument("argv", nargs=-1, type=click.UNPROCESSED)
+@click.pass_context
+def build(ctx, argv):
+    """Build this package using `poetry build`."""
+    # Note: See if -q or --quiet has been passed in argv.
+    quiet = "-q" in argv or "--quiet" in argv
+    ctx.invoke(clean, quiet=quiet)
+    # Note: Build using poetry.s
+    cmd = ["poetry", "build", *argv]
+    _run(cmd, check=True, quiet=quiet)
+
+
+@cli.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument("argv", nargs=-1, type=click.UNPROCESSED)
+@click.pass_context
+def publish(ctx, argv):
+    """Publish this package using `poetry publish`."""
+    # Note: See if -q or --quiet has been passed in argv.
+    quiet = "-q" in argv or "--quiet" in argv
+    # Note: If so, forward -q to build nested command.
+    build_argv = [] if not quiet else ["-q"]
+    ctx.invoke(build, argv=build_argv)
+    # Note: Publish using poetry.
+    cmd = ["poetry", "publish", *argv]
+    _run(cmd, check=True, quiet=quiet)
+
+
+@cli.command()
+@click.option("-q", "--quiet", is_flag=True, help="Do not display message(s).")
+@click.option("-b", "--build", is_flag=True, help="Build docs to ./docs")
+@click.option("-s", "--serve", is_flag=True, help="Serve docs from ./docs")
+@click.option(
+    "-h",
+    "--host",
+    default="localhost:3000",
+    help="Specify docs server host and port.",
+    show_default=True,
+)
+def docs(quiet, build, serve, host):
+    """Build or serve local docs with `pdoc`."""
+    if not build and not serve:
+        raise click.UsageError(
+            "You must specify either option: [-b, --build] or [-s, --serve]"
+        )
+
+    if build:
+        _docs_build(quiet=quiet)
+    if serve or (not build and not serve):
+        _docs_serve(host=host, quiet=quiet)
+
+
+def _docs_build(quiet=False):
+    """Build docs with `pdoc`."""
+    pdoc_outdir = Path("_docs")
+    pdoc_module = SETTINGS["project_slug"]
+    docs_path = Path("./docs")
+
+    # Note: Build docs using `pdoc`.
+    _run(
+        ["pdoc", "--html", "--output-dir", str(pdoc_outdir), "--force", pdoc_module],
+        check=True,
+        quiet=quiet,
+    )
+
+    # Note: Take generated files and move them into ./docs.
+    #       This is more compatible with things like GitHub Pages.
+    try:
+        shutil.rmtree(docs_path)
+    except Exception as e:
+        pass
+    docs_path.mkdir()
+    files = pdoc_outdir.joinpath(pdoc_module).glob("*.*")
+    for f in files:
+        shutil.copy(f, docs_path)
+
+    # Note: Remove pdoc_outdir and files.
+    try:
+        shutil.rmtree(pdoc_outdir)
+    except Exception as e:
+        pass
+
+
+def _docs_serve(host="localhost:3000", quiet=False):
+    """Serve docs with `pdoc`."""
+    _run(["pdoc", "--http", host, "."], check=True, quiet=quiet)

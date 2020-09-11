@@ -1,0 +1,81 @@
+# {{ cookiecutter.project_name }}
+
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme) [![code style black](https://img.shields.io/badge/code%20style-black-%23000000)](https://github.com/psf/black) {% if cookiecutter.project_license != "No License" %}[![License {{ cookiecutter.project_license }}](https://img.shields.io/github/license/{{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }})](./LICENSE){% endif %}
+
+{% if cookiecutter.project_summary %}_{{ cookiecutter.project_summary }}_{% endif %}
+
+{% if cookiecutter.project_background %}## Background
+
+{{ cookiecutter.project_background }}{% endif %}
+
+## Install
+
+### Dependencies
+
+- Python {{ cookiecutter.project_python_ci }} ([pyenv] recommended)
+
+### Installation
+
+```bash
+pip install -U {{ cookiecutter.project_slug }}
+```
+
+## Usage
+
+{% if cookiecutter.github_username %}See the [documentation](https://{{ cookiecutter.github_username }}.github.io/test_20200912_1/){% endif %}.
+
+```bash
+# TODO: Update
+```
+
+## Features
+
+- _TODO: Update_
+
+## Support
+
+- Python {{ cookiecutter.project_python_ci }}
+- MacOS: Tested locally, Python {{ cookiecutter.project_python_local }} via [pytest]
+- Linux: Ubuntu Latest, Python {{ cookiecutter.project_python_ci }}) via [GitHub Actions]
+- Windows: Not tested. ☹️
+
+## Maintainers
+
+- {% if cookiecutter.github_username %} [{{ cookiecutter.github_username }}](https://github.com/{{ cookiecutter.github_username }}){% endif %}
+- _TODO: Update_
+
+## Attribution
+
+- _TODO:Update_
+
+## Contributing
+
+{% if cookiecutter.project_accepts_issues_prs %}Issues & pull-requests accepted. See the [CONTRIBUTING.md]{% endif %}
+
+_Small note: If editing the [README.md], please conform to the [standard-readme specification]._
+
+## License
+
+{% if cookiecutter.project_license != "No License" %}[{{ cookiecutter.project_license }}](./LICENSE) &copy; {{ cookiecutter.full_name }} 2020{% else %}{{ cookiecutter.project_license }}{% endif%}
+
+<!-- Links -->
+
+[setuptools]: https://setuptools.readthedocs.io/en/latest/
+[twine]: https://github.com/pypa/twine
+[pytest]: https://docs.pytest.org/en/latest/
+[tox]: https://tox.readthedocs.io/en/latest/
+[standard readme]: https://github.com/RichardLitt/standard-readme
+[black]: https://github.com/psf/black
+[pyenv]: https://github.com/pyenv/pyenv
+[github api]: https://developer.github.com/v3/licenses/
+[cookiecutter]: https://github.com/cookiecutter/cookiecutter
+[cookiecutter/cookiecutter]: https://github.com/cookiecutter/cookiecutter
+[aubricus/cookiecutter-cookiecutter]: https://github.com/aubricus/cookiecutter-cookiecutter
+[standard-readme specification]: https://github.com/RichardLitt/standard-readme
+[readme.md]: ./README.md
+[poetry]: https://python-poetry.org/docs/
+[contributing.md]: ./CONTRIBUTING.md
+[pydocstyle]: https://www.pydocstyle.org/en/stable/
+[editorconfig]: https://editorconfig.org/
+[toml]: https://toml.io/en/
+[github actions]: https://docs.github.com/en/actionss
